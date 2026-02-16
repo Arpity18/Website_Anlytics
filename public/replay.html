@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mfilterit Session Replayer</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- rrweb player -->
+    <link href="https://cdn.jsdelivr.net/npm/rrweb-player@latest/dist/style.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/rrweb-player@latest/dist/index.js"></script>
+    <style>
+        .spinner {
+            border: 4px solid rgba(0, 0, 0, 0.1);
+            border-top: 4px solid #3b82f6;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+
+<body class="bg-gray-50 min-h-screen flex flex-col items-center">
+    <nav class="bg-white bg-opacity-70 shadow-md w-full h-16 flex items-center">
+        <div class="max-w-7xl mx-auto px-4 flex items-center justify-between w-full">
+            <img src="https://360.mfilterit.com/static/media/mFilterIt_Logo%20_Square_Main.a68102e2.png"
+                alt="Mfilterit Logo" class="h-14 w-auto cursor-pointer"
+                onclick="window.open('https://mfilterit.com','_blank')">
+        </div>
+    </nav>
+
+    <h1 class="text-2xl font-bold my-6 text-gray-800">Session Replay</h1>
+
+    <div id="replayerDiv"
+        class="w-full max-w-6xl h-[650px] flex justify-center items-center bg-gray-100 rounded-xl relative">
+        <div id="loader" class="absolute inset-0 bg-white bg-opacity-70 flex justify-center items-center z-10">
+            <div class="spinner"></div>
+        </div>
+    </div>
+
+    <script>
+        const loader = document.getElementById("loader");
+        let player = null;
+
+        function showLoader() { loader.style.display = "flex"; }
+        function hideLoader() { loader.style.display = "none"; }
+
+        function initPlayer(events) {
+            if (player) {
+                // Clear old player
+                document.getElementById("replayerDiv").innerHTML = '<div id="loader" class="absolute inset-0 bg-white bg-opacity-70 flex justify-center items-center z-10"><div class="spinner"></div></div>';
+                loader = document.getElementById("loader");
+            }
+
+            showLoader();
+
+            setTimeout(() => {
+                new rrwebPlayer({
+                    target: document.getElementById("replayerDiv"),
+                    props: {
+                        events,
+                        autoPlay: true,
+                        showController: true,
+                        mouseTail: true,
+                        skipInactive: true,
+                    },
+                });
+                hideLoader();
+            }, 300);
+        }
+
+        // Listen for events from parent (Next.js app)
+        window.addEventListener("message", (event) => {
+            if (event.data.type === "PLAY_EVENTS" && event.data.events) {
+                initPlayer(event.data.events);
+            }
+        });
+
+        // Tell parent we're ready
+        if (window.parent) {
+            window.parent.postMessage({ type: "REPLAY_READY" }, "*");
+        }
+    </script>
+</body>
+
+</html>
